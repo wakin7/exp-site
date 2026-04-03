@@ -140,8 +140,11 @@
         window.onload = function() {
             // 生成量表二维码
             new QRCode(document.getElementById("scale-qr"), { text: SCALE_URL, width: 200, height: 200 });
-            // 初始化题库二维码占位
-            bankQrGenerator = new QRCode(document.getElementById("bank-qr"), { text: "Waiting...", width: 200, height: 200 });
+            
+            // 初始化题库二维码占位。关键修改：不要传递 text 属性。
+            // 这会创建一个空的 QRCode 对象，但不会在 DOM 中生成无效图像。
+            // 原代码：bankQrGenerator = new QRCode(document.getElementById("bank-qr"), { text: "Waiting...", width: 200, height: 200 });
+            bankQrGenerator = new QRCode(document.getElementById("bank-qr"), { width: 200, height: 200 });
         };
 
         // 开始实验按钮逻辑
@@ -171,6 +174,7 @@
 
                 // 1. 更新二维码
                 bankQrGenerator.clear();
+                // 第一次点击按钮后，makeCode 将使用第一个题库的有效 URL 生成真正的二维码。
                 bankQrGenerator.makeCode(bankData.url);
 
                 // 2. 更新文字
