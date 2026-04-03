@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>人机实验系统 - 拉丁方顺序版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background-color: #f4f7f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+        .setup-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            width: 650px;
+            text-align: center;
+        }
+        select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            margin: 0 10px;
+        }
+        .container {
+            display: flex;
+            gap: 50px;
+            margin-top: 20px;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 300px;
+        }
+        .qr-wrapper {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            min-height: 256px;
+            background: #fafafa;
+            align-items: center;
+        }
+        .status-msg { margin-top: 15px; color: #666; font-size: 0.95rem; }
+        .highlight { color: #007bff; font-weight: bold; }
+        
+        .btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-start { background-color: #007bff; color: white; }
+        .btn-next { background-color: #28a745; color: white; margin-top: 20px; }
+        .btn-next:disabled { background-color: #ccc; cursor: not-allowed; }
+        .btn-reset { background-color: #6c757d; color: white; margin-top: 20px; font-size: 12px; padding: 5px 15px; }
+        
+        #experiment-area { display: none; } /* 初始隐藏实验区域 */
+    </style>
+</head>
+<body>
+
+    <h1>人机实验流程控制</h1>
+
+    <div class="setup-panel" id="setup-panel">
+        <h3>实验准备：请选择本次被试的实验顺序</h3>
+        <select id="sequence-select">
+            <option value="0">序列 1 (1-2-6-3-5-4)</option>
+            <option value="1">序列 2 (2-3-1-4-6-5)</option>
+            <option value="2">序列 3 (3-4-2-5-1-6)</option>
+            <option value="3">序列 4 (4-5-3-6-2-1)</option>
+            <option value="4">序列 5 (5-6-4-1-3-2)</option>
+            <option value="5">序列 6 (6-1-5-2-4-3)</option>
+        </select>
+        <button class="btn btn-start" onclick="startExperiment()">锁定顺序并开始</button>
+    </div>
+
+    <div id="experiment-area">
+        <div class="container">
+            <div class="card">
+                <h2>1. 实验后量表填写</h2>
+                <div id="scale-qr" class="qr-wrapper"></div>
+                <p>请扫码填写评估量表</p>
+            </div>
+
+            <div class="card">
+                <h2>2. 知识测试题库</h2>
+                <div id="bank-qr" class="qr-wrapper"></div>
+                <div id="bank-info" class="status-msg">准备就绪</div>
+                <p id="counter" class="status-msg">当前进度: 0/6</p>
+                <button id="next-btn" class="btn btn-next" onclick="nextTask()">显示第一个任务</button>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <div class="status-msg" id="full-sequence-display"></div>
+            <button class="btn btn-reset" onclick="location.reload()">更换序列（重新开始）</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 数据配置 ---
+        const BANK_MAP = {
+            1: { name: "题库 A", url: "https://ks.wjx.com/vm/rFUV6Lw.aspx#" },
+            2: { name: "题库 B", url: "https://ks.wjx.com/vm/Y9R3Ed3.aspx#" },
+            3: { name: "题库 C", url: "https://ks.wjx.com/vm/Q5e01MX.aspx#" },
+            4: { name: "题库 D", url: "https://ks.wjx.com/vm/Or3JZnl.aspx#" },
+            5: { name: "题库 E", url: "https://ks.wjx.com/vm/PLKZDY2.aspx#" },
+            6: { name: "题库 F", url: "https://ks.wjx.com/vm/POY2KTH.aspx#" }
+        };
+
+        const SCALE_URL = "https://v.wjx.cn/vm/miavqVf.aspx#";
+
+        // 图片中的拉丁方序列
+        const SEQUENCES = [
+            [1, 2, 6, 3, 5, 4],
+            [2, 3, 1, 4, 6, 5],
+            [3, 4, 2, 5, 1, 6],
+            [4, 5, 3, 6, 2, 1],
+            [5, 6, 4, 1, 3, 2],
+            [6, 1, 5, 2, 4, 3]
+        ];
+
+        let activeSequence = [];
+        let currentIndex = 0;
+        let bankQrGenerator = null;
+
+        // 初始化
+        window.onload = function() {
+            // 生成量表二维码
+            new QRCode(document.getElementById("scale-qr"), { text: SCALE_URL, width: 200, height: 200 });
+            // 初始化题库二维码占位
+            bankQrGenerator = new QRCode(document.getElementById("bank-qr"), { text: "Waiting...", width: 200, height: 200 });
+        };
+
+        // 开始实验按钮逻辑
+        function startExperiment() {
+            const select = document.getElementById('sequence-select');
+            activeSequence = SEQUENCES[select.value];
+            currentIndex = 0;
+
+            // UI 切换
+            document.getElementById('setup-panel').style.display = 'none';
+            document.getElementById('experiment-area').style.display = 'block';
+            
+            // 显示完整序列
+            const seqNames = activeSequence.map(id => BANK_MAP[id].name.split(' ')[1]);
+            document.getElementById('full-sequence-display').innerHTML = `当前序列：<span class="highlight">${seqNames.join(' → ')}</span>`;
+        }
+
+        // 下一个任务逻辑
+        function nextTask() {
+            const info = document.getElementById('bank-info');
+            const counter = document.getElementById('counter');
+            const btn = document.getElementById('next-btn');
+
+            if (currentIndex < activeSequence.length) {
+                const bankId = activeSequence[currentIndex];
+                const bankData = BANK_MAP[bankId];
+
+                // 1. 更新二维码
+                bankQrGenerator.clear();
+                bankQrGenerator.makeCode(bankData.url);
+
+                // 2. 更新文字
+                currentIndex++;
+                info.innerHTML = `当前正在进行：<span class="highlight">${bankData.name}</span>`;
+                counter.innerText = `当前进度: ${currentIndex}/6`;
+                btn.innerText = currentIndex === 6 ? "全部任务已完成" : "完成当前，进入下一项";
+
+                if (currentIndex === 6) {
+                    btn.disabled = true;
+                    btn.style.backgroundColor = "#6c757d";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
