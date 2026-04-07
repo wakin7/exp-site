@@ -2,191 +2,160 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>人机实验系统 - 拉丁方顺序版</title>
+    <title>实验系统 - 双表并行版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body {
-            font-family: "Microsoft YaHei", sans-serif;
-            background-color: #f4f7f9;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px;
-        }
-        .setup-panel {
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-            width: 650px;
-            text-align: center;
-        }
-        select {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-            margin: 0 10px;
-        }
-        .container {
-            display: flex;
-            gap: 50px;
-            margin-top: 20px;
-        }
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 300px;
-        }
-        .qr-wrapper {
-            margin: 20px auto;
-            display: flex;
-            justify-content: center;
-            min-height: 256px;
-            background: #fafafa;
-            align-items: center;
-        }
-        .status-msg { margin-top: 15px; color: #666; font-size: 0.95rem; }
-        .highlight { color: #007bff; font-weight: bold; }
+        body { font-family: "Microsoft YaHei", sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .setup-panel { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; width: 700px; text-align: center; }
+        select { padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ddd; margin: 0 10px; }
+        .container { display: flex; gap: 30px; margin-top: 10px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 380px; }
+        .qr-section { background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; }
+        .qr-wrapper { margin: 10px auto; display: flex; justify-content: center; min-height: 180px; align-items: center; }
+        .info-label { font-size: 0.85rem; color: #666; margin-bottom: 5px; }
+        .info-value { font-size: 1.5rem; font-weight: 900; color: #007bff; }
+        .highlight-letter { color: #e83e8c; }
         
-        .btn {
-            padding: 12px 30px;
-            font-size: 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .btn-start { background-color: #007bff; color: white; }
-        .btn-next { background-color: #28a745; color: white; margin-top: 20px; }
-        .btn-next:disabled { background-color: #ccc; cursor: not-allowed; }
-        .btn-reset { background-color: #6c757d; color: white; margin-top: 20px; font-size: 12px; padding: 5px 15px; }
+        .btn { padding: 10px 20px; font-size: 15px; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; width: 100%; }
+        .btn-start { background-color: #007bff; color: white; width: auto; }
+        .btn-next { background-color: #28a745; color: white; margin-top: 10px; }
+        .btn-draw { background-color: #6f42c1; color: white; margin-top: 10px; }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
         
-        #experiment-area { display: none; } /* 初始隐藏实验区域 */
+        #experiment-area { display: none; }
+        .reset-link { margin-top: 30px; font-size: 0.8rem; color: #999; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <h1>人机实验流程控制</h1>
+    <h1>人机协作实验控制台</h1>
 
     <div class="setup-panel" id="setup-panel">
-        <h3>实验准备：请选择本次被试的实验顺序</h3>
+        <h3>请根据拉丁方分配表选择方案</h3>
         <select id="sequence-select">
-            <option value="0">序列 1 (1-2-6-3-5-4)</option>
-            <option value="1">序列 2 (2-3-1-4-6-5)</option>
-            <option value="2">序列 3 (3-4-2-5-1-6)</option>
-            <option value="3">序列 4 (4-5-3-6-2-1)</option>
-            <option value="4">序列 5 (5-6-4-1-3-2)</option>
-            <option value="5">序列 6 (6-1-5-2-4-3)</option>
+            <option value="0">方案 1 (1-2-6-3-5-4)</option>
+            <option value="1">方案 2 (2-3-1-4-6-5)</option>
+            <option value="2">方案 3 (3-4-2-5-1-6)</option>
+            <option value="3">方案 4 (4-5-3-6-2-1)</option>
+            <option value="4">方案 5 (5-6-4-1-3-2)</option>
+            <option value="5">方案 6 (6-1-5-2-4-3)</option>
         </select>
-        <button class="btn btn-start" onclick="startExperiment()">锁定顺序并开始</button>
+        <button class="btn btn-start" onclick="startExperiment()">确认并锁定方案</button>
     </div>
 
     <div id="experiment-area">
         <div class="container">
+            
             <div class="card">
-                <h2>1. 实验后量表填写</h2>
-                <div id="scale-qr" class="qr-wrapper"></div>
-                <p>请扫码填写评估量表</p>
+                <h2>1. 实验后填表</h2>
+                
+                <div class="qr-section">
+                    <div class="info-label">① 基础量表 (固定)</div>
+                    <div id="scale-qr" class="qr-wrapper"></div>
+                </div>
+
+                <div class="qr-section">
+                    <div class="info-label">② 知识测试问卷 (不放回抽取)</div>
+                    <div id="knowledge-qr" class="qr-wrapper"></div>
+                    <div class="info-value highlight-letter" id="current-letter">等待抽取</div>
+                </div>
+
+                <button id="draw-btn" class="btn btn-draw" onclick="drawKnowledgeTest()" disabled>抽取本组知识问卷</button>
+                <p class="info-label" id="pool-info" style="margin-top:10px">剩余待抽问卷: 6</p>
             </div>
 
             <div class="card">
-                <h2>2. 知识测试题库</h2>
-                <div id="bank-qr" class="qr-wrapper"></div>
-                <div id="bank-info" class="status-msg">准备就绪</div>
-                <p id="counter" class="status-msg">当前进度: 0/6</p>
-                <button id="next-btn" class="btn btn-next" onclick="nextTask()">显示第一个任务</button>
+                <h2>2. 实验任务</h2>
+                <div class="qr-section" style="min-height: 400px; display: flex; flex-direction: column; justify-content: center;">
+                    <div class="info-label">当前实验组编号</div>
+                    <div class="info-value" id="current-group-num" style="font-size: 3rem;">-</div>
+                    <div id="task-qr" class="qr-wrapper"></div>
+                    <p id="progress-text">已完成进度: 0 / 6</p>
+                </div>
+                <button id="next-btn" class="btn btn-next" onclick="nextTask()">显示下一组实验任务</button>
             </div>
+
         </div>
         
-        <div style="text-align: center; margin-top: 30px;">
-            <div class="status-msg" id="full-sequence-display"></div>
-            <button class="btn btn-reset" onclick="location.reload()">更换序列（重新开始）</button>
+        <div class="footer">
+            <span class="reset-link" onclick="location.reload()">[ 结束本次实验并重置 ]</span>
         </div>
     </div>
 
     <script>
-        // --- 数据配置 ---
-        const BANK_MAP = {
-            1: { name: "题库 A", url: "https://ks.wjx.com/vm/rFUV6Lw.aspx#" },
-            2: { name: "题库 B", url: "https://ks.wjx.com/vm/Y9R3Ed3.aspx#" },
-            3: { name: "题库 C", url: "https://ks.wjx.com/vm/Q5e01MX.aspx#" },
-            4: { name: "题库 D", url: "https://ks.wjx.com/vm/Or3JZnl.aspx#" },
-            5: { name: "题库 E", url: "https://ks.wjx.com/vm/PLKZDY2.aspx#" },
-            6: { name: "题库 F", url: "https://ks.wjx.com/vm/POY2KTH.aspx#" }
+        // --- 1. 链接配置 ---
+        const SCALE_URL = "https://v.wjx.cn/vm/miavqVf.aspx#"; // 固定量表地址
+        
+        const KNOWLEDGE_TESTS = { // 知识测试问卷 A-F
+            'A': 'https://link.to/testA', 'B': 'https://link.to/testB', 'C': 'https://link.to/testC',
+            'D': 'https://link.to/testD', 'E': 'https://link.to/testE', 'F': 'https://link.to/testF'
         };
 
-        const SCALE_URL = "https://v.wjx.cn/vm/miavqVf.aspx#";
+        const GROUP_TASKS = { // 实验组任务 1-6
+            1: 'https://link.to/task1', 2: 'https://link.to/task2', 3: 'https://link.to/task3',
+            4: 'https://link.to/task4', 5: 'https://link.to/task5', 6: 'https://link.to/task6'
+        };
 
-        // 图片中的拉丁方序列
-        const SEQUENCES = [
-            [1, 2, 6, 3, 5, 4],
-            [2, 3, 1, 4, 6, 5],
-            [3, 4, 2, 5, 1, 6],
-            [4, 5, 3, 6, 2, 1],
-            [5, 6, 4, 1, 3, 2],
-            [6, 1, 5, 2, 4, 3]
+        const SEQUENCES = [ // 拉丁方数字序列
+            [1, 2, 6, 3, 5, 4], [2, 3, 1, 4, 6, 5], [3, 4, 2, 5, 1, 6],
+            [4, 5, 3, 6, 2, 1], [5, 6, 4, 1, 3, 2], [6, 1, 5, 2, 4, 3]
         ];
 
-        let activeSequence = [];
-        let currentIndex = 0;
-        let bankQrGenerator = null;
+        // --- 2. 运行状态 ---
+        let letterPool = ['A', 'B', 'C', 'D', 'E', 'F'];
+        let activeSeq = [];
+        let stepIndex = 0;
+        let scaleQr, knowledgeQr, taskQr;
 
-        // 初始化
         window.onload = function() {
-            // 生成量表二维码
-            new QRCode(document.getElementById("scale-qr"), { text: SCALE_URL, width: 200, height: 200 });
-            
-            // 初始化题库二维码占位。关键修改：不要传递 text 属性。
-            // 这会创建一个空的 QRCode 对象，但不会在 DOM 中生成无效图像。
-            // 原代码：bankQrGenerator = new QRCode(document.getElementById("bank-qr"), { text: "Waiting...", width: 200, height: 200 });
-            bankQrGenerator = new QRCode(document.getElementById("bank-qr"), { width: 200, height: 200 });
+            scaleQr = new QRCode(document.getElementById("scale-qr"), { width: 160, height: 160 });
+            knowledgeQr = new QRCode(document.getElementById("knowledge-qr"), { width: 160, height: 160 });
+            taskQr = new QRCode(document.getElementById("task-qr"), { width: 200, height: 200 });
         };
 
-        // 开始实验按钮逻辑
         function startExperiment() {
-            const select = document.getElementById('sequence-select');
-            activeSequence = SEQUENCES[select.value];
-            currentIndex = 0;
-
-            // UI 切换
+            const idx = document.getElementById('sequence-select').value;
+            activeSeq = SEQUENCES[idx];
             document.getElementById('setup-panel').style.display = 'none';
             document.getElementById('experiment-area').style.display = 'block';
-            
-            // 显示完整序列
-            const seqNames = activeSequence.map(id => BANK_MAP[id].name.split(' ')[1]);
-            document.getElementById('full-sequence-display').innerHTML = `当前序列：<span class="highlight">${seqNames.join(' → ')}</span>`;
+            scaleQr.makeCode(SCALE_URL); // 固定量表生成
         }
 
-        // 下一个任务逻辑
+        // 右侧逻辑：切换实验任务
         function nextTask() {
-            const info = document.getElementById('bank-info');
-            const counter = document.getElementById('counter');
-            const btn = document.getElementById('next-btn');
+            if (stepIndex < 6) {
+                const groupNum = activeSeq[stepIndex];
+                taskQr.makeCode(GROUP_TASKS[groupNum]);
+                
+                document.getElementById('current-group-num').innerText = groupNum;
+                document.getElementById('progress-text').innerText = `已完成进度: ${stepIndex} / 6`;
+                
+                // 开启左侧抽取权限
+                document.getElementById('draw-btn').disabled = false;
+                document.getElementById('draw-btn').innerText = `抽取第 ${groupNum} 组对应的知识问卷`;
+                
+                // 清除上一组的问卷显示
+                knowledgeQr.clear();
+                document.getElementById('current-letter').innerText = "请点击下方抽取";
 
-            if (currentIndex < activeSequence.length) {
-                const bankId = activeSequence[currentIndex];
-                const bankData = BANK_MAP[bankId];
+                stepIndex++;
+                if(stepIndex === 6) document.getElementById('next-btn').disabled = true;
+            }
+        }
 
-                // 1. 更新二维码
-                bankQrGenerator.clear();
-                // 第一次点击按钮后，makeCode 将使用第一个题库的有效 URL 生成真正的二维码。
-                bankQrGenerator.makeCode(bankData.url);
-
-                // 2. 更新文字
-                currentIndex++;
-                info.innerHTML = `当前正在进行：<span class="highlight">${bankData.name}</span>`;
-                counter.innerText = `当前进度: ${currentIndex}/6`;
-                btn.innerText = currentIndex === 6 ? "全部任务已完成" : "完成当前，进入下一项";
-
-                if (currentIndex === 6) {
-                    btn.disabled = true;
-                    btn.style.backgroundColor = "#6c757d";
-                }
+        // 左侧逻辑：随机不放回抽取知识测试
+        function drawKnowledgeTest() {
+            if (letterPool.length > 0) {
+                const randIdx = Math.floor(Math.random() * letterPool.length);
+                const letter = letterPool.splice(randIdx, 1)[0];
+                
+                knowledgeQr.makeCode(KNOWLEDGE_TESTS[letter]);
+                document.getElementById('current-letter').innerText = "问卷 " + letter;
+                document.getElementById('pool-info').innerText = `剩余待抽问卷: ${letterPool.length}`;
+                
+                // 抽取后锁定，直到下一组任务开始
+                document.getElementById('draw-btn').disabled = true;
+                document.getElementById('draw-btn').innerText = "已抽取，请完成填写";
             }
         }
     </script>
