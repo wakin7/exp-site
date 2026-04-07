@@ -2,43 +2,55 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>实验流程控制 - 修复参数版</title>
+    <title>人机协作实验控制台</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --primary: #007bff; --secondary: #6f42c1; --success: #28a745; --bg: #f4f7f9; }
-        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background-color: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .setup-panel { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px; width: 800px; text-align: center; }
-        .input-group { margin: 15px 0; display: flex; justify-content: center; gap: 15px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        #experiment-area { display: none; width: 100%; max-width: 1000px; }
+        :root { --primary: #3b82f6; --secondary: #6366f1; --success: #22c55e; --bg: #f8fafc; }
+        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background-color: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 40px; color: #1e293b; }
+        
+        /* 初始设置卡片样式 (匹配你的截图) */
+        .setup-card { background: #fff; padding: 40px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 850px; text-align: center; }
+        .setup-card h2 { font-size: 1.5rem; margin-bottom: 30px; color: #0f172a; }
+        .input-row { display: flex; justify-content: center; gap: 30px; margin-bottom: 25px; }
+        .field-group { text-align: center; }
+        .field-group label { display: block; font-size: 0.95rem; margin-bottom: 8px; font-weight: 500; }
+        input, select { padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 1rem; background: #fff; outline: none; transition: border 0.2s; }
+        input:focus { border-color: var(--primary); }
+        
+        /* 初始界面的二维码展示区 */
+        #demo-qr-section { margin-top: 30px; padding: 20px; background: #f1f5f9; border-radius: 16px; display: none; }
+        .qr-wrapper { margin: 15px auto; display: flex; justify-content: center; min-height: 180px; align-items: center; }
+        
+        /* 按钮样式 */
+        .btn { padding: 14px 40px; font-size: 1.1rem; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn-success { background: var(--success); color: white; margin-top: 15px; }
+        .btn:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+
+        /* 正式实验区域 */
+        #experiment-area { display: none; width: 100%; max-width: 1000px; animation: fadeIn 0.4s ease-out; }
         .container { display: flex; gap: 30px; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; flex: 1; }
-        .qr-section { background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 15px; }
-        .qr-wrapper { margin: 10px auto; display: flex; justify-content: center; min-height: 180px; align-items: center; }
-        .info-value { font-size: 2rem; font-weight: 900; color: var(--primary); }
-        .btn { padding: 15px 20px; font-size: 17px; border: none; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; }
-        .btn-start { background: var(--primary); color: white; width: auto; }
-        .btn-next { background: var(--success); color: white; margin-top: 10px; }
-        .btn-confirm { background: var(--secondary); color: white; margin-top: 10px; }
-        .btn:disabled { background: #ccc !important; opacity: 0.7; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; margin-top: 5px; }
-        .waiting { background: #fff3cd; color: #856404; }
-        .completed { background: #d4edda; color: #155724; }
+        .task-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; flex: 1; }
+        .group-big-num { font-size: 9rem; font-weight: 900; color: #0f172a; margin: 15px 0; line-height: 1; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .reset-link { margin-top: 40px; color: #94a3b8; font-size: 0.85rem; cursor: pointer; text-decoration: underline; }
     </style>
 </head>
 <body>
 
-    <h1>人机协作实验控制台</h1>
+    <h1 style="font-size: 2.2rem; margin-bottom: 40px;">人机协作实验控制台</h1>
 
-    <div class="setup-panel" id="setup-panel">
-        <h3>实验初始设置</h3>
-        <div class="input-group">
-            <div>
-                <label>被试编号 (SID):</label><br>
-                <input type="number" id="sid-input" placeholder="01">
+    <div class="setup-card" id="setup-panel">
+        <h2>实验初始设置</h2>
+        <div class="input-row">
+            <div class="field-group">
+                <label>被试编号 (SID):</label>
+                <input type="number" id="sid-input" placeholder="01" min="1">
             </div>
-            <div>
-                <label>选择方案:</label><br>
+            <div class="field-group">
+                <label>选择方案:</label>
                 <select id="seq-select">
                     <option value="0">方案 1 (1-2-6-3-5-4)</option>
                     <option value="1">方案 2 (2-3-1-4-6-5)</option>
@@ -49,93 +61,126 @@
                 </select>
             </div>
         </div>
-        <button class="btn btn-start" onclick="initExperiment()">锁定并开始实验</button>
+
+        <button class="btn btn-primary" id="lock-btn" onclick="lockAndShowDemo()">锁定并开始实验</button>
+
+        <div id="demo-qr-section">
+            <p style="font-weight: 600; color: #d63384;">第一步：请被试扫码填写人口学背景信息</p>
+            <div id="demo-qr" class="qr-wrapper"></div>
+            <p style="font-size: 0.9rem; color: #64748b;">(编号 SID: <span id="sid-display-1">--</span> 已自动关联)</p>
+            <button class="btn btn-success" onclick="goToTasks()">人口学填写完成，进入实验任务</button>
+        </div>
     </div>
 
     <div id="experiment-area">
         <div class="container">
-            <div class="card">
-                <h2 style="margin:0 0 15px 0">1. 扫码填表区</h2>
-                <div class="qr-section">
-                    <div style="font-size:0.8rem; color:#888">① 固定量表 (SID: <span class="sid-txt">--</span>)</div>
+            <div class="task-card">
+                <h3 style="margin-top:0">问卷填表环节</h3>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                    <p style="font-size:0.85rem; color:#64748b; margin-bottom:5px">① 固定评价量表 (SID: <span class="sid-display-2">--</span>)</p>
                     <div id="scale-qr" class="qr-wrapper"></div>
                 </div>
-                <div class="qr-section">
-                    <div style="font-size:0.8rem; color:#888">② 知识测试 (SID: <span class="sid-txt">--</span>)</div>
+
+                <div style="background: #f8fafc; padding: 15px; border-radius: 12px;">
+                    <p style="font-size:0.85rem; color:#64748b; margin-bottom:5px">② 随机知识测试 (SID: <span class="sid-display-2">--</span>)</p>
                     <div id="knowledge-qr" class="qr-wrapper"></div>
-                    <div class="info-value" id="cur-letter" style="color:var(--secondary); font-size:2.5rem">-</div>
-                    <div id="fill-status" class="status-badge waiting">等待填写...</div>
+                    <div id="cur-letter" style="font-size:2.5rem; font-weight:900; color:var(--secondary)">-</div>
                 </div>
-                <button id="confirm-btn" class="btn btn-confirm" onclick="confirmStep()" disabled>确认已填写</button>
+                
+                <button id="confirm-btn" class="btn" style="background:var(--secondary); color:white; width:100%; margin-top:15px" onclick="confirmStep()" disabled>确认本组已填完</button>
             </div>
 
-            <div class="card">
-                <h2 style="margin:0 0 15px 0">2. 实验任务</h2>
-                <div class="qr-section" style="background:#fff; min-height:300px; display:flex; flex-direction:column; justify-content:center">
-                    <div style="font-size:0.9rem; color:#666">当前实验组数字</div>
-                    <div style="font-size:8rem; font-weight:900" id="group-num">-</div>
-                    <p id="progress" style="color:#999">进度: 0 / 6</p>
+            <div class="task-card">
+                <h3 style="margin-top:0">当前实验任务</h3>
+                <div style="min-height: 380px; display: flex; flex-direction: column; justify-content: center;">
+                    <p style="color: #64748b;">当前进行的实验组数字</p>
+                    <div class="group-big-num" id="group-num">-</div>
+                    <p id="progress-text" style="color:#94a3b8; font-weight: 600;">完成进度: 0 / 6</p>
                 </div>
-                <button id="next-btn" class="btn btn-next" onclick="nextTask()">显示第一组任务</button>
+                <button id="next-btn" class="btn btn-next" style="background:var(--success); color:white; width:100%" onclick="nextTask()">开始第一个任务</button>
             </div>
         </div>
-        <div style="margin-top:30px; color:#aaa; cursor:pointer" onclick="location.reload()">[ 重置实验 ]</div>
+        <p class="reset-link" onclick="location.reload()">[ 重置本次实验记录 ]</p>
     </div>
 
     <script>
+        // --- 1. 配置链接 ---
+        const DEMO_URL = "https://v.wjx.cn/vm/hDYXzGL.aspx#"; 
         const SCALE_URL = "https://v.wjx.cn/vm/miavqVf.aspx#"; 
-        const KNOWLEDGE_URLS = { 
-            'A': 'https://ks.wjx.com/vm/rFUV6Lw.aspx#', 'B': 'https://ks.wjx.com/vm/Y9R3Ed3.aspx#', 
-            'C': 'https://ks.wjx.com/vm/Q5e01MX.aspx#', 'D': 'https://ks.wjx.com/vm/Or3JZnl.aspx#', 
+        const KNOWLEDGE_MAP = {
+            'A': 'https://ks.wjx.com/vm/rFUV6Lw.aspx#', 'B': 'https://ks.wjx.com/vm/Y9R3Ed3.aspx#',
+            'C': 'https://ks.wjx.com/vm/Q5e01MX.aspx#', 'D': 'https://ks.wjx.com/vm/Or3JZnl.aspx#',
             'E': 'https://ks.wjx.com/vm/PLKZDY2.aspx#', 'F': 'https://ks.wjx.com/vm/POY2KTH.aspx#'
         };
-        const SEQS = [ [1,2,6,3,5,4],[2,3,1,4,6,5],[3,4,2,5,1,6],[4,5,3,6,2,1],[5,6,4,1,3,2],[6,1,5,2,4,3] ];
+        const SEQS = [[1,2,6,3,5,4],[2,3,1,4,6,5],[3,4,2,5,1,6],[4,5,3,6,2,1],[5,6,4,1,3,2],[6,1,5,2,4,3]];
 
         let sid = "", pool = ['A','B','C','D','E','F'], activeSeq = [], step = 0;
-        let qrS, qrK;
+        let qrDemo, qrScale, qrKnow;
 
         window.onload = () => {
-            qrS = new QRCode(document.getElementById("scale-qr"), { width: 180, height: 180 });
-            qrK = new QRCode(document.getElementById("knowledge-qr"), { width: 180, height: 180 });
+            qrDemo = new QRCode(document.getElementById("demo-qr"), { width: 180, height: 180 });
+            qrScale = new QRCode(document.getElementById("scale-qr"), { width: 180, height: 180 });
+            qrKnow = new QRCode(document.getElementById("knowledge-qr"), { width: 180, height: 180 });
         };
 
-        // 核心修复函数：安全地拼接参数
         function buildUrl(base, id) {
-            let clean = base.split('#')[0]; // 去掉末尾的 #
-            return `${clean}?s=${id}#`;    // 重新拼接为 ...aspx?s=01#
+            let clean = base.split('#')[0];
+            return `${clean}?s=${id}#`;
         }
 
-        function initExperiment() {
-            sid = document.getElementById('sid-input').value;
-            if(!sid) return alert("请输入编号");
+        // 逻辑步骤 A: 锁定并显示人口学二维码
+        function lockAndShowDemo() {
+            sid = document.getElementById('sid-input').value.trim();
+            if(!sid) return alert("请输入被试编号！");
+
+            // 禁用输入
+            document.getElementById('sid-input').disabled = true;
+            document.getElementById('seq-select').disabled = true;
+            document.getElementById('lock-btn').style.display = 'none';
+
+            // 显示二维码
+            document.getElementById('demo-qr-section').style.display = 'block';
+            document.getElementById('sid-display-1').innerText = sid;
+            qrDemo.makeCode(buildUrl(DEMO_URL, sid));
+        }
+
+        // 逻辑步骤 B: 进入正式任务界面
+        function goToTasks() {
             activeSeq = SEQS[document.getElementById('seq-select').value];
+            
+            // 界面切换
             document.getElementById('setup-panel').style.display = 'none';
             document.getElementById('experiment-area').style.display = 'block';
-            document.querySelectorAll('.sid-txt').forEach(e => e.innerText = sid);
-            qrS.makeCode(buildUrl(SCALE_URL, sid));
+            
+            // 更新编号
+            document.querySelectorAll('.sid-display-2').forEach(e => e.innerText = sid);
+            
+            // 预加载固定量表
+            qrScale.makeCode(buildUrl(SCALE_URL, sid));
         }
 
+        // 逻辑步骤 C: 任务循环
         function nextTask() {
             if (step < 6) {
                 document.getElementById('group-num').innerText = activeSeq[step];
                 const letter = pool.splice(Math.floor(Math.random()*pool.length), 1)[0];
-                qrK.makeCode(buildUrl(KNOWLEDGE_URLS[letter], sid));
+                
+                qrKnow.makeCode(buildUrl(KNOWLEDGE_MAP[letter], sid));
                 document.getElementById('cur-letter').innerText = letter;
+                
                 document.getElementById('next-btn').disabled = true;
                 document.getElementById('confirm-btn').disabled = false;
-                document.getElementById('fill-status').className = "status-badge waiting";
-                document.getElementById('fill-status').innerText = "等待填写...";
+                
                 step++;
-                document.getElementById('progress').innerText = `进度: ${step} / 6`;
+                document.getElementById('progress-text').innerText = `完成进度: ${step} / 6`;
             }
         }
 
         function confirmStep() {
             document.getElementById('confirm-btn').disabled = true;
-            document.getElementById('fill-status').className = "status-badge completed";
-            document.getElementById('fill-status').innerText = "确认完成 ✓";
             document.getElementById('next-btn').disabled = false;
-            if(step === 6) document.getElementById('next-btn').innerText = "实验结束";
+            if(step === 6) document.getElementById('next-btn').innerText = "实验全部完成";
         }
     </script>
 </body>
