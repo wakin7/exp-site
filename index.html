@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>实验流程自动化控制 - 严谨版</title>
+    <title>实验流程自动化控制 - 生产版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: "Microsoft YaHei", sans-serif; background-color: #f4f7f9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
@@ -36,7 +36,7 @@
     <h1>人机协作实验控制台</h1>
 
     <div class="setup-panel" id="setup-panel">
-        <h3>实验准备：请选择拉丁方方案 (2026版)</h3>
+        <h3>实验准备：请选择拉丁方方案</h3>
         <select id="sequence-select">
             <option value="0">方案 1 (1-2-6-3-5-4)</option>
             <option value="1">方案 2 (2-3-1-4-6-5)</option>
@@ -60,7 +60,7 @@
                 </div>
 
                 <div class="qr-section">
-                    <div class="info-label">② 知识测试问卷 (自动抽取)</div>
+                    <div class="info-label">② 知识测试问卷 (已配置)</div>
                     <div id="knowledge-qr" class="qr-wrapper"></div>
                     <div class="info-value highlight-letter" id="current-letter">-</div>
                     <div id="fill-status" class="status-tag status-waiting">等待填写...</div>
@@ -78,7 +78,7 @@
                 </div>
                 
                 <button id="next-btn" class="btn btn-next" onclick="nextTask()">开始第一组实验任务</button>
-                <p style="font-size: 0.8rem; color: #999; margin-top: 10px;">需点击左侧“确认填写”后方可切换</p>
+                <p style="font-size: 0.8rem; color: #999; margin-top: 10px;">点击左侧“确认填写”后方可切换任务</p>
             </div>
 
         </div>
@@ -90,25 +90,27 @@
     </div>
 
     <script>
-        // --- 1. 配置信息 ---
-        const SCALE_URL = "https://v.wjx.cn/vm/miavqVf.aspx#"; // 量表地址
+        const SCALE_URL = "https://v.wjx.cn/vm/miavqVf.aspx#"; 
         
-        const KNOWLEDGE_TESTS = { // 知识测试 A-F 链接
-            'A': 'https://link.to/testA', 'B': 'https://link.to/testB', 'C': 'https://link.to/testC',
-            'D': 'https://link.to/testD', 'E': 'https://link.to/testE', 'F': 'https://link.to/testF'
+        // 已填入你提供的真实问卷链接
+        const KNOWLEDGE_TESTS = { 
+            'A': 'https://ks.wjx.com/vm/rFUV6Lw.aspx#', 
+            'B': 'https://ks.wjx.com/vm/Y9R3Ed3.aspx#', 
+            'C': 'https://ks.wjx.com/vm/Q5e01MX.aspx#',
+            'D': 'https://ks.wjx.com/vm/Or3JZnl.aspx#', 
+            'E': 'https://ks.wjx.com/vm/PLKZDY2.aspx#', 
+            'F': 'https://ks.wjx.com/vm/POY2KTH.aspx#'
         };
 
-        const SEQUENCES = [ // 拉丁方数字序列
+        const SEQUENCES = [ 
             [1, 2, 6, 3, 5, 4], [2, 3, 1, 4, 6, 5], [3, 4, 2, 5, 1, 6],
             [4, 5, 3, 6, 2, 1], [5, 6, 4, 1, 3, 2], [6, 1, 5, 2, 4, 3]
         ];
 
-        // --- 2. 逻辑控制 ---
         let letterPool = ['A', 'B', 'C', 'D', 'E', 'F'];
         let activeSeq = [];
         let stepIndex = 0;
         let scaleQr, knowledgeQr;
-        let isCurrentFilled = false;
 
         window.onload = function() {
             scaleQr = new QRCode(document.getElementById("scale-qr"), { width: 180, height: 180 });
@@ -120,44 +122,28 @@
             activeSeq = SEQUENCES[idx];
             document.getElementById('setup-panel').style.display = 'none';
             document.getElementById('experiment-area').style.display = 'block';
-            
-            scaleQr.makeCode(SCALE_URL); // 初始化固定量表
+            scaleQr.makeCode(SCALE_URL); 
             document.getElementById('full-sequence-display').innerText = "预定顺序: " + activeSeq.join(" → ");
         }
 
-        // 右侧逻辑：切换实验任务 + 自动触发左侧抽取
         function nextTask() {
             if (stepIndex < 6) {
                 const groupNum = activeSeq[stepIndex];
-                
-                // 1. 更新右侧数字显示
                 document.getElementById('current-group-num').innerText = groupNum;
-                
-                // 2. 自动触发左侧问卷抽取
                 autoDrawKnowledge();
-
-                // 3. 锁定右侧按钮，直到左侧确认
                 document.getElementById('next-btn').disabled = true;
                 document.getElementById('next-btn').innerText = "请先确认填写问卷";
-
-                // 4. 更新进度
                 stepIndex++;
                 document.getElementById('progress-text').innerText = `正在进行: ${stepIndex} / 6`;
             }
         }
 
-        // 左侧逻辑：自动抽取知识测试
         function autoDrawKnowledge() {
             if (letterPool.length > 0) {
                 const randIdx = Math.floor(Math.random() * letterPool.length);
                 const letter = letterPool.splice(randIdx, 1)[0];
-                
-                // 生成二维码
                 knowledgeQr.makeCode(KNOWLEDGE_TESTS[letter]);
                 document.getElementById('current-letter').innerText = letter;
-                
-                // 重置填写状态
-                isCurrentFilled = false;
                 document.getElementById('confirm-btn').disabled = false;
                 document.getElementById('confirm-btn').innerText = "确认已填写完成 (" + letter + ")";
                 document.getElementById('fill-status').innerText = "等待填写...";
@@ -165,27 +151,18 @@
             }
         }
 
-        // 左侧确认按钮点击
         function confirmFilling() {
-            isCurrentFilled = true;
-            
-            // 1. 禁用确认按钮
             document.getElementById('confirm-btn').disabled = true;
             document.getElementById('confirm-btn').innerText = "已记录确认";
-            
-            // 2. 更新状态标签
             document.getElementById('fill-status').innerText = "已确认填写 ✓";
             document.getElementById('fill-status').className = "status-tag status-done";
             
-            // 3. 解锁右侧按钮
             const nextBtn = document.getElementById('next-btn');
             if (stepIndex < 6) {
                 nextBtn.disabled = false;
                 nextBtn.innerText = "进入下一组实验任务";
-                nextBtn.style.backgroundColor = "#28a745";
             } else {
                 nextBtn.innerText = "实验全部完成";
-                nextBtn.style.backgroundColor = "#6c757d";
             }
         }
     </script>
